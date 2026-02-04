@@ -1,0 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment (uv-managed)
+.venv/
+env/
+venv/
+.uv/
+
+# VS Code settings
+.vscode/
+
+# MCP telemetry logs (if any)
+mcp_logs/
+*.log
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+*.wheel
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+

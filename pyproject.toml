@@ -1,0 +1,30 @@
+[project]
+name = "agentic_ai"
+version = "0.1.0"
+description = "Project Chimera: Autonomous AI Influencer prototype repository for Task 1 setup and architecture research."
+authors = [
+    { name="Dereje Derib", email="derejederib@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.uv]
+# Python environment and dependency management handled via uv
+python-version = "3.11"
+
+[tool.uv.dependencies]
+# Core Python libraries you might use in research/prototyping
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+plotly = "*"
+
+[tool.uv.dev-dependencies]
+# Optional dev tools for Task 1
+jupyter = "*"
+pytest = "*"
+mermaid = "*"
+
+[build-system]
+requires = ["setuptools>=65.5.0", "uv>=0.9.29"]
+build-backend = "setuptools.build_meta"

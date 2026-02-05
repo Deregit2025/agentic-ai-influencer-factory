@@ -1,148 +1,105 @@
 
+# ===================================================
 # Project Chimera: Tooling & MCP Strategy
-# =========================================
-# Author: [Your Name]
-# Date: [Today’s Date]
-# Purpose: Document the tools, MCP servers, and agent runtime skills strategy for Project Chimera.
+# File: research/tooling_strategy.md
+# Purpose: Document all developer tools (MCP servers) and runtime agent skills
+# ===================================================
 
-## 1. Developer Tools (MCP Servers)
-These tools help developers and co-pilot AI agents maintain professional standards, traceability, and governance.
+# ------------------------
+# Overview
+# ------------------------
+Project Chimera requires a clear separation between developer tooling (MCP servers) and agent runtime capabilities (Skills).  
+This document outlines:
 
-| Tool Name          | Type             | Purpose / Use Case                                           | Notes / Configuration                                         |
-|-------------------|-----------------|--------------------------------------------------------------|----------------------------------------------------------------|
-| git-mcp           | Version Control  | Tracks all code and spec changes, enforces commit hygiene.  | Connects to Tenx MCP Sense for commit telemetry.             |
-| filesystem-mcp    | File Operations  | Allows safe read/write access to project files.             | Ensures traceability for all file modifications.             |
-| docker-mcp        | Build & Runtime  | Builds and runs containerized environment for testing.     | Ensures reproducible environment for CI/CD.                  |
-| telemetry-mcp     | Logging/Telemetry| Streams agent actions, skill calls, and test outcomes.      | Essential for MCP Sense "Black Box" trace recording.         |
-| spec-check-mcp    | Spec Verification| Checks that any proposed code aligns with `specs/`.        | Optional but recommended to reduce hallucinations.           |
+1. MCP Servers used for development, telemetry, and governance.  
+2. Agent Skills that enable Chimera to perform autonomous influencer tasks.  
 
-### Rules & Dos / Don’ts for MCP Tools
-**Dos:**  
-- Always use git-mcp for commits, branch management, and merges.  
-- Use filesystem-mcp for any script or skill file operations.  
-- Ensure docker-mcp is used for all builds and tests before CI/CD pushes.  
-- Log all agent actions via telemetry-mcp.  
+All tools and skills are designed to maintain **spec fidelity, traceability, and TDD alignment**.
 
-**Don’ts:**  
-- Do NOT bypass spec-check-mcp when proposing new features.  
-- Never manually edit MCP telemetry logs.  
-- Avoid running tests outside the Docker environment to prevent "works on my machine" issues.
+# ------------------------
+# Part A: Developer Tools (MCP Servers)
+# ------------------------
 
----
+| MCP Server Name           | Type | URL                                      | Enabled Tools | Enabled Prompts | Purpose                                      |
+|---------------------------|------|------------------------------------------|---------------|----------------|----------------------------------------------|
+| tenxfeedbackanalytics     | HTTP | https://mcppulse.10academy.org/proxy    | 3             | 1              | Telemetry, logging, analytics feedback      |
 
-## 2. Agent Skills (Runtime)
-These Skills are runtime capabilities that Chimera agents will call to perform autonomous tasks. All Skills must have well-defined **Input/Output contracts**.
+**Usage Guidelines:**  
+- Only use MCP servers that are installed and running.  
+- Verify server availability before executing dependent tasks.  
+- All actions performed with MCP servers must be logged for traceability.  
+- Do not attempt to use GitHub MCP tools since they are not installed in this environment.  
 
-### 2.1 Skill: `skill_trend_fetcher`
-**Purpose:** Fetch trending topics from social platforms or other trend sources.  
-**Input:**  
+**Configuration Example (`.vscode/mcp.json`):**
 ```json
 {
-  "platform": "string",   // e.g., "Twitter", "TikTok", "YouTube"
-  "category": "string",   // e.g., "technology", "finance"
-  "limit": "integer"      // number of trends to fetch
+  "servers": {
+    "tenxfeedbackanalytics": {
+      "url": "https://mcppulse.10academy.org/proxy",
+      "type": "http",
+      "headers": {
+        "X-Device": "windows",
+        "X-Coding-Tool": "vscode"
+      }
+    }
+  },
+  "inputs": []
 }
 ````
 
-**Output:**
+# ------------------------
 
-```json
-{
-  "trends": [
-    {
-      "title": "string",
-      "url": "string",
-      "engagement_score": "float",
-      "timestamp": "ISO8601 datetime"
-    }
-  ]
-}
-```
+# Part B: Agent Skills (Runtime Capabilities)
 
-**Notes:**
+# ------------------------
 
-* Must validate the platform input.
-* Results stored in the database via technical spec schema.
+Agent Skills are **reusable capability packages** that Chimera calls during runtime to achieve autonomous influencer objectives.
 
-### 2.2 Skill: `skill_content_generator`
+| Skill Name              | Purpose                                                   | Input                                   | Output                                |
+| ----------------------- | --------------------------------------------------------- | --------------------------------------- | ------------------------------------- |
+| skill_trend_fetcher     | Fetch trending topics from social media APIs              | `platform`, `region`, `limit`           | JSON array of trending topics         |
+| skill_content_generator | Generate social media content based on trends             | `trend_data`, `tone`, `length`          | Formatted post content (text, images) |
+| skill_publisher_content | Publish content to target channels with optional approval | `content`, `channel`, `approval_status` | Publication log, success/failure      |
 
-**Purpose:** Generate multimedia content (text, image, video) based on trends.
-**Input:**
+**Skill Guidelines:**
 
-```json
-{
-  "trend": "string",
-  "content_type": "string",   // "text", "image", "video"
-  "tone": "string"            // "informative", "funny", "formal"
-}
-```
+* Each Skill must follow the **Input/Output contracts** defined in `technical.md`.
+* Skills must not access MCP servers directly unless explicitly allowed.
+* Logging and telemetry for each skill must be sent to `tenxfeedbackanalytics`.
+* Skills must fail gracefully if specifications or input contracts are violated.
 
-**Output:**
+# ------------------------
 
-```json
-{
-  "content_id": "UUID",
-  "content_url": "string",
-  "metadata": {
-    "length": "integer",
-    "format": "string"
-  }
-}
-```
+# Part C: Tooling & Skills Alignment with Specs
 
-**Notes:**
+# ------------------------
 
-* Output must comply with OpenClaw integration specs if content is for publishing.
-* Include traceable logs for all generated content.
+* All MCP server actions and agent skills **must reference specifications**:
 
-### 2.3 Skill: `skill_publisher_content`
+  * `_meta.md` — high-level vision
+  * `functional.md` — user stories
+  * `technical.md` — API contracts, database schema
+  * `openclaw_integration.md` — OpenClaw publishing (if applicable)
 
-**Purpose:** Publish generated content to social networks or OpenClaw-enabled agent networks.
-**Input:**
+* **Traceability**: Every skill invocation should be logged to MCP with reference to the relevant spec.
 
-```json
-{
-  "content_id": "UUID",
-  "platform": "string",
-  "schedule_time": "ISO8601 datetime (optional)"
-}
-```
+* **TDD Alignment**: Skills will initially fail against the tests in `tests/` to define the "empty slot" for agents.
 
-**Output:**
+# ------------------------
 
-```json
-{
-  "status": "string",  // e.g., "success", "failed"
-  "message": "string"  // detailed reason if failed
-}
-```
+# Summary
 
-**Notes:**
+# ------------------------
 
-* Must verify OpenClaw or platform availability before publishing.
-* Logs must include timestamps, agent ID, and content references.
+This strategy ensures:
 
----
+1. Clear separation between **development tooling** (MCP) and **runtime capabilities** (Skills).
+2. Full **traceability and auditability** for agent actions.
+3. Agents operate **safely, predictably, and spec-compliant**.
 
-## 3. Recommended Workflow
+# ===================================================
 
-1. Agent reads specs in `specs/`.
-2. Calls appropriate Skill from `skills/` folder.
-3. Uses MCP tools for logging, telemetry, and environment safety.
-4. All results stored in the database and optionally pushed to OpenClaw network.
-5. Human-in-the-loop approves or reviews content for safety-critical steps.
+# End of Tooling & MCP Strategy
 
----
-
-## 4. Rubric Alignment
-
-| Rubric Dimension | Alignment Explanation                                     |
-| ---------------- | --------------------------------------------------------- |
-| Tooling & Skills | Clear separation between Developer MCPs & Runtime Skills. |
-| Spec Fidelity    | Skills and MCP tools strictly reference specs.            |
-| Testing Strategy | Skills designed for TDD: tests validate input/output.     |
-| CI/CD            | Skills run in Docker with telemetry and automated tests.  |
-
-
-
+# ===================================================
 

@@ -1,65 +1,296 @@
-# Technical Specification — Project Chimera
+
+# Project Chimera — Technical Specification
 
 ## 1. Purpose
-This document defines the technical design of Project Chimera. It specifies system components, how they interact, data storage design, API contracts, and traceability requirements. This document is the single source of truth for implementation and testing.
+
+This document defines the **technical contracts** governing Project Chimera.  
+It specifies **how components communicate**, **what data looks like**, and **how state is persisted**, without prescribing implementation details.
+
+This document is the **source of truth** for:
+- API contracts
+- Agent input/output schemas
+- Database structure
+- Test expectations
 
 ---
 
-## 2. System Architecture Overview
+## 2. System Components
 
-Project Chimera is an **agentic system** composed of a core orchestrating agent and multiple modular skills. The system is designed to be autonomous, traceable, and governed.
+### 2.1 Logical Components
 
-### 2.1 Core Components
-
-- **Agent Core**
+- **Chimera Agent**
   - Orchestrates workflows
-  - Decides which skill to invoke and when
-  - Enforces execution order and safety checks
+  - Invokes skills
+  - Publishes status
 
-- **Skills**
-  - Reusable, atomic capabilities
-  - Examples:
-    - Trend Fetching
-    - Content Generation
-    - Content Publishing
-  - Each skill exposes a strict input/output contract
+- **External Data Providers**
+  - Trend APIs
+  - Video platforms
 
-- **Human-in-the-Loop (HITL) Layer**
-  - Optional approval gate before publishing
-  - Prevents unsafe or non-compliant content
+- **Skill Modules**
+  - Discrete capability units invoked by the agent
 
-- **Database**
-  - Stores trends, generated content, publishing logs
-  - Designed for high-velocity metadata
-
-- **OpenClaw Integration**
-  - Publishes agent status and availability
-  - Enables participation in the Agent Social Network
-
-- **Telemetry (MCP Sense)**
-  - Logs agent decisions and actions
-  - Provides traceability and auditability
+- **Persistence Layer**
+  - Stores structured metadata
 
 ---
 
-## 3. Component Interaction Flow
+## 3. API Contracts
 
-1. Agent Core requests trend data from `skill_trend_fetcher`
-2. Trend data is passed to `skill_content_generator`
-3. Generated content enters HITL approval (if enabled)
-4. Approved content is sent to `skill_publisher_content`
-5. Results are logged to the database
-6. Agent publishes status updates to OpenClaw
+All APIs exchange **JSON-only**, schema-valid payloads.  
+No free-form text responses are permitted.
 
-### 3.1 Interaction Diagram
+---
+
+### 3.1 Trend Fetching API
+
+**Purpose:** Retrieve trending topics from an external source.
+
+#### Request
+```json
+{
+  "source": "string",
+  "limit": 10
+}
+````
+
+#### Response
+
+```json
+{
+  "trends": [
+    {
+      "topic_id": "string",
+      "name": "string",
+      "category": "string",
+      "relevance_score": 0.0,
+      "retrieved_at": "ISO-8601 timestamp"
+    }
+  ]
+}
+```
+
+#### Constraints
+
+* `relevance_score` must be between 0.0 and 1.0
+* Empty trend lists are valid but must be explicit
+
+---
+
+### 3.2 Video Discovery API
+
+**Purpose:** Retrieve videos related to a selected topic.
+
+#### Request
+
+```json
+{
+  "topic_id": "string",
+  "platform": "string",
+  "limit": 5
+}
+```
+
+#### Response
+
+```json
+{
+  "videos": [
+    {
+      "video_id": "string",
+      "title": "string",
+      "source_platform": "string",
+      "url": "string",
+      "published_at": "ISO-8601 timestamp"
+    }
+  ]
+}
+```
+
+#### Constraints
+
+* `video_id` must be unique per platform
+* Duplicate URLs are not allowed
+
+---
+
+### 3.3 Metadata Extraction API
+
+**Purpose:** Extract metadata from a video.
+
+#### Request
+
+```json
+{
+  "video_id": "string",
+  "source_platform": "string"
+}
+```
+
+#### Response
+
+```json
+{
+  "metadata": {
+    "video_id": "string",
+    "title": "string",
+    "duration_seconds": 0,
+    "language": "string",
+    "published_at": "ISO-8601 timestamp",
+    "extraction_status": "complete | partial | failed"
+  }
+}
+```
+
+---
+
+### 3.4 Skill Invocation Contract
+
+All skills must conform to this generic interface.
+
+#### Input
+
+```json
+{
+  "skill_name": "string",
+  "payload": {}
+}
+```
+
+#### Output
+
+```json
+{
+  "status": "success | failure",
+  "result": {},
+  "error": null
+}
+```
+
+---
+
+## 4. Database Schema
+
+### 4.1 Design Rationale
+
+A **relational schema** is used to ensure:
+
+* Referential integrity
+* Traceability across workflows
+* Deterministic querying for audits and tests
+
+---
+
+### 4.2 Entity Relationship Diagram (ERD)
 
 ```mermaid
-graph LR
-A[Agent Core] --> B[Skill: Trend Fetcher]
-A --> C[Skill: Content Generator]
-A --> D[Skill: Content Publisher]
-B --> E[Database]
-C --> E
-D --> E
-A --> F[OpenClaw Network]
-G[Human-in-the-Loop] --> A
+erDiagram
+    TREND ||--o{ VIDEO : generates
+    VIDEO ||--|| VIDEO_METADATA : has
+
+    TREND {
+        string topic_id PK
+        string name
+        string category
+        float relevance_score
+        datetime retrieved_at
+    }
+
+    VIDEO {
+        string video_id PK
+        string topic_id FK
+        string source_platform
+        string url
+        datetime published_at
+    }
+
+    VIDEO_METADATA {
+        string video_id PK
+        int duration_seconds
+        string language
+        string extraction_status
+    }
+```
+
+---
+
+### 4.3 Table Definitions
+
+#### TREND
+
+| Field           | Type     | Notes          |
+| --------------- | -------- | -------------- |
+| topic_id        | string   | Primary key    |
+| name            | string   | Trend name     |
+| category        | string   | Classification |
+| relevance_score | float    | 0.0–1.0        |
+| retrieved_at    | datetime | ISO-8601       |
+
+---
+
+#### VIDEO
+
+| Field           | Type     | Notes                |
+| --------------- | -------- | -------------------- |
+| video_id        | string   | Primary key          |
+| topic_id        | string   | Foreign key          |
+| source_platform | string   | YouTube, TikTok, etc |
+| url             | string   | Unique               |
+| published_at    | datetime | ISO-8601             |
+
+---
+
+#### VIDEO_METADATA
+
+| Field             | Type   | Notes       |
+| ----------------- | ------ | ----------- |
+| video_id          | string | Primary key |
+| duration_seconds  | int    | ≥ 0         |
+| language          | string | ISO code    |
+| extraction_status | string | enum        |
+
+---
+
+## 5. Error Handling Contracts
+
+All errors must be explicit and structured.
+
+```json
+{
+  "status": "failure",
+  "error": {
+    "code": "string",
+    "message": "string",
+    "recoverable": true
+  }
+}
+```
+
+No silent failures are permitted.
+
+---
+
+## 6. Versioning & Compatibility
+
+* All API contracts are versioned implicitly by spec revision
+* Breaking changes require a new spec update
+* Agents must refuse to operate on unknown schemas
+
+---
+
+## 7. Traceability Rules
+
+Every element in this document must map to:
+
+* A functional story in `functional.md`
+* A failing test in `tests/`
+* A skill interface in `skills/`
+
+---
+
+## 8. Non-Negotiable Rule
+
+> If an implementation deviates from this document, the implementation is wrong — not the spec.
+
+
+

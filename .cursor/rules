@@ -1,52 +1,90 @@
-# Project Chimera IDE Agent Rules
-# ====================================
-# This rules file instructs the IDE's AI co-pilot on how to behave, prioritize tasks, and maintain traceability.
-# Author: [Your Name]
-# Date: [Today’s Date]
+# ===================================================
+# Project Chimera: IDE Agent Rules
+# File: .cursor/rules
+# Purpose: Define behavior and constraints for the IDE AI Agent
+# ===================================================
 
-## Project Context
-- Project Name: Chimera
-- System Type: Autonomous Influencer System
-- Mission: Build a swarm of AI agents that can research trends, generate content, and manage social engagement autonomously.
-- Primary Objective: Ensure every agent action is traceable, spec-driven, and secure.
-- Environment: Python-based, Spec-Driven Development, CI/CD with Docker, MCP-connected IDE.
+# ------------------------
+# Project Context
+# ------------------------
+- Project Name: Project Chimera
+- Description: An autonomous influencer system that researches trends, generates content, and publishes it with minimal human intervention.
+- Business Goal: Build a robust, scalable environment where AI agents execute tasks based on spec-driven development without hallucination or conflict.
+- Human Oversight: Humans approve content at the "Safety Layer" only; all other steps are agent-controlled.
 
-## Prime Directives
-1. NEVER generate or modify code without first checking the `specs/` directory.
-2. ALWAYS confirm the spec alignment before executing or suggesting solutions.
-3. Treat `_meta.md` as the single source of truth for project objectives.
-4. Functional and technical specs define agent capabilities and contract structures—respect these strictly.
+# ------------------------
+# Prime Directive
+# ------------------------
+- NEVER generate code without first checking the specifications in the specs/ directory.
+- Always reference:
+  - specs/_meta.md
+  - specs/functional.md
+  - specs/technical.md
+  - specs/openclaw_integration.md (if needed)
+- Do not assume requirements — always follow the ratified specs.
 
-## Traceability Rules
-- BEFORE coding:
-  - Explain your plan and logic in clear, step-by-step instructions.
-  - Reference the exact spec file(s) that justify your design.
-- AFTER coding:
-  - Annotate how your changes map to functional and technical specs.
-  - Ensure any new Skill or Tool aligns with the tooling_strategy.md or skills README.md.
+# ------------------------
+# Traceability & Reasoning
+# ------------------------
+- Always explain your plan in plain language **before** writing any code.
+- Every action must be linked to a spec section.
+- Maintain auditability — include reasoning and spec reference in commit messages.
 
-## Safety & Governance
-- Human-in-the-loop:
-  - Critical actions (e.g., publishing content) must have explicit spec or human approval layer.
-- Logging:
-  - All agent decisions, API calls, and skill executions must be traceable via MCP Sense telemetry.
-- Error Handling:
-  - Never silently handle errors that could breach spec contracts.
-  - Fail fast and provide context-rich diagnostics.
+# ------------------------
+# Contextual Behavior
+# ------------------------
+- Treat Skills as the agent's runtime capabilities (skills/ directory).
+- Treat MCP Servers as developer and infrastructure tools.
+- Do not attempt to access tools not registered in the MCP servers.
+- Confirm MCP server availability before executing dependent actions.
 
-## Skills & Tools Interaction
-- Agent may only call Skills defined in `skills/` directory.
-- MCP servers may only be used for development, file operations, or telemetry purposes.
-- Skills must have clearly defined input/output contracts as per README.md.
+# ------------------------
+# Allowed MCP Servers (Current Environment)
+# ------------------------
+- tenxfeedbackanalytics
+  - Type: HTTP
+  - URL: https://mcppulse.10academy.org/proxy
+  - Tools Enabled: 3
+  - Prompts Enabled: 1
+  - Usage: Only for telemetry, logging, and analytics feedback.
 
-## Communication Rules
-- When interacting with other agents via OpenClaw:
-  - Follow social protocols defined in `openclaw_integration.md`.
-  - Always verify recipient agent availability before sending commands.
-- Do not assume human-readable outputs are correct—agents must confirm spec compliance.
+# ------------------------
+# Agent Skills (Runtime Capabilities)
+# ------------------------
+- skill_trend_fetcher: Fetch trending topics, validate against API contract.
+- skill_content_generator: Generate social media content per trends with formatting rules.
+- skill_publisher_content: Publish content to target channels, following human-in-the-loop approval if required.
 
-## Continuous Learning / Self-Improvement
-- Agents may propose refactors or optimizations, but must:
-  - Document the change
-  - Map it to specs
-  - Wait for human or automated TDD approval before merging
+# ------------------------
+# Do's
+# ------------------------
+- Do read and interpret specs before writing any code.
+- Do validate input/output against defined API contracts.
+- Do log all actions to MCP for traceability.
+- Do fail tests intentionally to define TDD "empty slots" for agent tasks.
+
+# ------------------------
+# Don'ts
+# ------------------------
+- Don't make assumptions about functional behavior.
+- Don't bypass the human-in-the-loop safety layer.
+- Don't attempt to access or use MCP servers or tools not installed in the current environment.
+- Don't commit or generate code outside the approved Git workflow.
+
+# ------------------------
+# Communication Protocols
+# ------------------------
+- When referencing other agents (OpenClaw network), only publish:
+  - Availability
+  - Status updates
+- Ensure all messages comply with the OpenClaw integration spec.
+
+# ------------------------
+# Summary
+# ------------------------
+- Your mission: Execute agent tasks **strictly according to the specifications**, using allowed MCP servers and skills, while logging all actions for traceability.
+- Always plan, explain, and confirm before coding.
+
+# ===================================================
+# End of Rules
+# ===================================================

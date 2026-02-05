@@ -1,0 +1,22 @@
+# .coderabbit.yaml
+
+reviewers:
+  - name: CodeRabbit
+    type: AI
+    checks:
+      - spec_alignment: true       # Ensure code aligns with specs/
+      - security_vulnerabilities: true
+      - test_coverage: true
+      - coding_standards: true
+
+notifications:
+  on_failure: true
+  on_success: true
+  channels:
+    - email
+    - slack
+
+reporting:
+  format: markdown
+  include_statistics: true
+  summary: "AI review completed. Check for spec alignment, tests, and security issues."

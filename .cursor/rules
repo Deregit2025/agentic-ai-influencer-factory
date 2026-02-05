@@ -1,0 +1,52 @@
+# Project Chimera IDE Agent Rules
+# ====================================
+# This rules file instructs the IDE's AI co-pilot on how to behave, prioritize tasks, and maintain traceability.
+# Author: [Your Name]
+# Date: [Today’s Date]
+
+## Project Context
+- Project Name: Chimera
+- System Type: Autonomous Influencer System
+- Mission: Build a swarm of AI agents that can research trends, generate content, and manage social engagement autonomously.
+- Primary Objective: Ensure every agent action is traceable, spec-driven, and secure.
+- Environment: Python-based, Spec-Driven Development, CI/CD with Docker, MCP-connected IDE.
+
+## Prime Directives
+1. NEVER generate or modify code without first checking the `specs/` directory.
+2. ALWAYS confirm the spec alignment before executing or suggesting solutions.
+3. Treat `_meta.md` as the single source of truth for project objectives.
+4. Functional and technical specs define agent capabilities and contract structures—respect these strictly.
+
+## Traceability Rules
+- BEFORE coding:
+  - Explain your plan and logic in clear, step-by-step instructions.
+  - Reference the exact spec file(s) that justify your design.
+- AFTER coding:
+  - Annotate how your changes map to functional and technical specs.
+  - Ensure any new Skill or Tool aligns with the tooling_strategy.md or skills README.md.
+
+## Safety & Governance
+- Human-in-the-loop:
+  - Critical actions (e.g., publishing content) must have explicit spec or human approval layer.
+- Logging:
+  - All agent decisions, API calls, and skill executions must be traceable via MCP Sense telemetry.
+- Error Handling:
+  - Never silently handle errors that could breach spec contracts.
+  - Fail fast and provide context-rich diagnostics.
+
+## Skills & Tools Interaction
+- Agent may only call Skills defined in `skills/` directory.
+- MCP servers may only be used for development, file operations, or telemetry purposes.
+- Skills must have clearly defined input/output contracts as per README.md.
+
+## Communication Rules
+- When interacting with other agents via OpenClaw:
+  - Follow social protocols defined in `openclaw_integration.md`.
+  - Always verify recipient agent availability before sending commands.
+- Do not assume human-readable outputs are correct—agents must confirm spec compliance.
+
+## Continuous Learning / Self-Improvement
+- Agents may propose refactors or optimizations, but must:
+  - Document the change
+  - Map it to specs
+  - Wait for human or automated TDD approval before merging

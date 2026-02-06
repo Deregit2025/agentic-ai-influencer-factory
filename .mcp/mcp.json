@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "description": "Project Chimera MCP Configuration: Defines all MCP servers, endpoints, auth, tools, prompts, and schemas for agent connectivity and governance.",
+  
+  "servers": {
+    "tenxfeedbackanalytics": {
+      "url": "https://mcppulse.10academy.org/proxy",
+      "type": "http",
+      "auth": {
+        "method": "apiKey",
+        "key": "YOUR_API_KEY_HERE"
+      },
+      "headers": {
+        "X-Device": "windows",
+        "X-Coding-Tool": "vscode"
+      },
+      "tools": {
+        "telemetry": true,
+        "logging": true,
+        "analytics": true
+      },
+      "prompts": {
+        "enabled": 1,
+        "description": "Used for AI feedback, logging, and telemetry insights."
+      },
+      "schemas": {
+        "input": "schemas/tenx/input_schema.json",
+        "output": "schemas/tenx/output_schema.json"
+      },
+      "notes": "Primary MCP server for agent telemetry and analytics."
+    }
+  },
+
+  "servers_future": {
+    "placeholder_mcp_server": {
+      "url": "https://future.mcp.server/api",
+      "type": "http",
+      "auth": {
+        "method": "oauth2",
+        "token_url": "https://future.mcp.server/oauth/token",
+        "client_id": "YOUR_CLIENT_ID",
+        "client_secret": "YOUR_CLIENT_SECRET"
+      },
+      "tools": {
+        "content_generation": true,
+        "data_fetch": true
+      },
+      "prompts": {
+        "enabled": 2,
+        "description": "For content generation and data ingestion tasks."
+      },
+      "schemas": {
+        "input": "schemas/future/input_schema.json",
+        "output": "schemas/future/output_schema.json"
+      },
+      "notes": "Example placeholder for additional MCP servers."
+    }
+  },
+
+  "metadata": {
+    "created_by": "Dereje Derib",
+    "project": "Project Chimera",
+    "last_updated": "2026-02-06",
+    "purpose": "Define MCP connections, server auth, allowed tools, prompts, and schemas for agent compliance and governance."
+  }
+}

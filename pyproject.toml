@@ -8,22 +8,17 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11"
 
-[tool.uv]
-# Python environment and dependency management handled via uv
-python-version = "3.11"
-
-[tool.uv.dependencies]
-# Core Python libraries you might use in research/prototyping
-numpy = "*"
-pandas = "*"
-matplotlib = "*"
-plotly = "*"
-
-[tool.uv.dev-dependencies]
-# Optional dev tools for Task 1
-jupyter = "*"
-pytest = "*"
-mermaid = "*"
+[tool.uv.dependency-groups]
+default = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "plotly"
+]
+dev = [
+    "jupyter",
+    "pytest"
+]
 
 [build-system]
 requires = ["setuptools>=65.5.0", "uv>=0.9.29"]

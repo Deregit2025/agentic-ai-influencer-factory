@@ -1,93 +1,142 @@
 
-# Project Chimera: Frontend Design (Minimal)
+# Frontend Specifications for Project Chimera
+
+**Project:** Project Chimera  
+**Purpose:** Define the minimal set of screens, user flows, component hierarchies, and backend mappings to allow autonomous agents to generate a production-ready interface.
+
+---
 
 ## 1. Overview
-Although the full UI implementation is out of scope for Task 1, this document defines the minimal frontend screens, user flows, and component hierarchy required for future integration with backend APIs and agent skills.
 
-The goal is to provide clear guidance for developers or designers who may implement a UI in later phases.
-
----
-
-## 2. Screens
-
-### 2.1 Dashboard
-- Purpose: Central hub for monitoring agent activity and content status.
-- Key Elements:
-  - Summary of trending topics fetched (`skill_trend_fetcher`)
-  - Recent generated content (`skill_content_generator`)
-  - Content approval queue for human oversight (`skill_publisher_content`)
-  - System logs / agent actions
-
-### 2.2 Content Approval Screen
-- Purpose: Allow human reviewers to approve, reject, or edit content.
-- Key Elements:
-  - List of pending content items
-  - Preview of generated content
-  - Approval / Reject buttons
-  - Optional comments field
-- Linked Backend API: `skills.skill_publisher_content.publish()`
-
-### 2.3 Agent Activity Screen
-- Purpose: Monitor agent runtime behavior and logs.
-- Key Elements:
-  - Agent status (Idle, Running, Error)
-  - Actions executed with timestamp
-  - Spec references for each action
-- Linked Backend API: `skills.skill_trend_fetcher.fetch_trends()`, `skills.skill_content_generator.generate()`
+Even though the frontend is not fully implemented, this spec defines the structure, interactions, and accessibility requirements. It ensures every UI action is explicitly linked to a backend API and that agents can generate the interface in future iterations.
 
 ---
 
-## 3. User Flows
+## 2. Screens & User Flows
 
-### 3.1 Generating Content
-1. User logs into Dashboard.
-2. Agent fetches trending topics.
-3. Agent generates content automatically.
-4. Content is sent to Content Approval Screen if human-in-the-loop is required.
-5. User approves or edits content.
-6. Approved content is published via the publisher skill.
+### 2.1 Dashboard Screen
+**Purpose:** Show trending topics, recent posts, and system status.
 
-### 3.2 Monitoring Agent
-1. User opens Agent Activity Screen.
-2. Agent logs are displayed in real-time.
-3. Users can click on an action to see spec references and reasoning.
+**Components:**
+- Trending Topics Panel
+  - Fields: topic_name, trend_score, timestamp
+  - Backend API: `GET /trends/latest`
+  - Validation: topic_name is non-empty string, trend_score is numeric
+  - Error states: Show "No trends available" if empty
+- Recent Posts Panel
+  - Fields: post_id, content_snippet, status
+  - Backend API: `GET /posts/recent`
+  - Error states: "Failed to fetch posts" if API fails
+- System Status Widget
+  - Fields: uptime, errors_count
+  - Backend API: `GET /system/status`
+  - Validation: uptime > 0
+
+**User Flows:**
+1. User opens dashboard → trends and posts fetch → rendered in panels
+2. Click on a trend → navigates to Trend Details Screen
 
 ---
 
-## 4. Component Hierarchy
+### 2.2 Trend Details Screen
+**Purpose:** Show detailed trend analytics and historical data.
 
+**Components:**
+- Trend Analytics Chart
+  - Backend API: `GET /trends/{trend_id}/analytics`
+  - Validation: trend_id exists
+  - Error states: "Analytics unavailable"
+- Related Content Feed
+  - Backend API: `GET /trends/{trend_id}/content`
+  - Validation: List of content objects
+  - Empty state: "No content available for this trend"
+
+---
+
+### 2.3 Content Creation Screen
+**Purpose:** Allow AI agent or human oversight to generate and approve content.
+
+**Components:**
+- Content Textbox
+  - Field: draft_content
+  - Validation: max 280 characters, required
+- Trend Selection Dropdown
+  - Field: trend_id
+  - Backend API: `GET /trends/latest`
+- Publish Button
+  - Backend API: `POST /posts/create`
+  - Validation: Ensure draft_content is not empty
+  - Error handling: Show API error messages
+
+**User Flows:**
+1. Agent fetches suggested content → displays in textbox
+2. Human approves → clicks publish → POST request → success/error feedback
+
+---
+
+### 2.4 Component Hierarchies
 ```
 
 Dashboard
-│
-├─ TrendingTopicsWidget
-│
-├─ GeneratedContentList
-│
-├─ ApprovalQueueWidget
-│
-└─ AgentActivityPanel
-├─ ActionLog
-└─ SpecReferenceViewer
+├── TrendingTopicsPanel
+├── RecentPostsPanel
+└── SystemStatusWidget
+
+TrendDetails
+├── TrendAnalyticsChart
+└── RelatedContentFeed
+
+ContentCreation
+├── ContentTextbox
+├── TrendSelectionDropdown
+└── PublishButton
 
 ```
 
 ---
 
-## 5. API Mappings
-
-| UI Component             | Backend Skill / API                 | Notes |
-|--------------------------|------------------------------------|-------|
-| TrendingTopicsWidget      | `skill_trend_fetcher.fetch_trends()` | Fetches and displays trending topics |
-| GeneratedContentList      | `skill_content_generator.generate()` | Displays AI-generated content |
-| ApprovalQueueWidget       | `skill_publisher_content.publish()` | Handles human approval flow |
-| AgentActivityPanel        | Logging endpoints in MCP          | Shows real-time agent actions |
+## 3. Field-Level API Mappings
+| Screen | Component | Field | API Endpoint | Validation | Error State |
+|--------|-----------|-------|-------------|-----------|------------|
+| Dashboard | TrendingTopicsPanel | topic_name | GET /trends/latest | non-empty string | "No trends available" |
+| Dashboard | TrendingTopicsPanel | trend_score | GET /trends/latest | numeric | "No trends available" |
+| Dashboard | RecentPostsPanel | content_snippet | GET /posts/recent | string | "Failed to fetch posts" |
+| ContentCreation | ContentTextbox | draft_content | POST /posts/create | max 280 chars, required | "Cannot publish empty content" |
+| ContentCreation | TrendSelectionDropdown | trend_id | GET /trends/latest | exists in list | "No trend selected" |
 
 ---
 
-## 6. Notes
-- This frontend is minimal and mostly for visualization and human-in-the-loop interaction.
-- Screens are placeholders and will be expanded in future phases.
-- All components assume backend APIs and agent skills are operational.
+## 4. Validation Rules & Error States
+- All required fields must be validated before sending to backend.
+- Show contextual error messages per component.
+- Fallback UI for network failures or empty responses.
+
+---
+
+## 5. Accessibility Requirements
+- Keyboard navigable components.
+- ARIA roles for panels, buttons, and inputs.
+- Sufficient color contrast for all text and visual indicators.
+- Screen reader-friendly labels for dynamic content.
+
+---
+
+## 6. Backend Contract Linkage
+- Every screen action is explicitly tied to an API endpoint (see Field-Level API Mappings above).
+- Agents must log all requests and responses in MCP for traceability.
+- UI must fail gracefully if API contract changes or validation fails.
+
+---
+
+## 7. Edge Cases
+- Empty states for lists or feeds.
+- Loading states for API fetches.
+- API failures should trigger error display without blocking other UI components.
+- Validation errors prevent submission.
+
+---
+
+**End of Frontend Specifications**
 ```
+
 

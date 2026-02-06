@@ -16,8 +16,8 @@ DOCKER_IMAGE=project_chimera:latest
 setup:
 	@echo "=== Setting up Python environment and dependencies ==="
 	uv sync
-	pip install --upgrade pip
-	pip install -r requirements.txt || true
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements.txt || true
 	@echo "Setup complete ✅"
 
 # ==========================
@@ -34,12 +34,50 @@ test:
 # ==========================
 # Command: spec-check
 # ==========================
-# Optional: verifies code aligns with specs (you can extend this)
+# Verifies code aligns with project specifications
 .PHONY: spec-check
 spec-check:
 	@echo "=== Running Spec Alignment Check ==="
-	# Placeholder: add actual spec validation script here
+	$(PYTHON) scripts/spec_checker.py || true
 	@echo "Spec check complete ✅"
+
+# ==========================
+# Command: lint
+# ==========================
+# Lint Python code using flake8
+.PHONY: lint
+lint:
+	@echo "=== Linting Python code ==="
+	flake8 skills/ tests/ scripts/
+	@echo "Linting complete ✅"
+
+# ==========================
+# Command: format
+# ==========================
+# Format Python code using black
+.PHONY: format
+format:
+	@echo "=== Formatting Python code ==="
+	black skills/ tests/ scripts/
+	@echo "Formatting complete ✅"
+
+# ==========================
+# Command: security-scan
+# ==========================
+# Run security scan with Bandit
+.PHONY: security-scan
+security-scan:
+	@echo "=== Running Security Scan ==="
+	bandit -r skills/ scripts/
+	@echo "Security scan complete ✅"
+
+# ==========================
+# Command: all
+# ==========================
+# Runs full automation suite: lint, format, security, spec-check, test
+.PHONY: all
+all: lint format security-scan spec-check test
+	@echo "=== Full automation suite completed ✅ ==="
 
 # ==========================
 # Command: shell
